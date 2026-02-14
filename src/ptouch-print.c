@@ -25,6 +25,7 @@
 #include <sys/stat.h>	/* open() */
 #include <fcntl.h>	/* open() */
 #include <gd.h>
+#include <locale.h>	/* setlocale(), LC_* */
 #include "config.h"
 #include "gettext.h"	/* gettext(), ngettext() */
 #include "ptouch.h"
@@ -262,7 +263,13 @@ gdImage *render_text(char *font, char *line[], int lines, int tape_width)
 	/* now render lines */
 	for (i=0; i<lines; i++) {
 		int ofs=get_baselineoffset(line[i], font_file, fsz);
-		int pos=((i)*(tape_width/(lines)))+(max_height)-ofs-1;
+		int band_height = tape_width / lines;
+		/* center each line vertically within its band */
+		int band_offset = (band_height - max_height) / 2;
+		int pos = (i * band_height) + band_offset + max_height - ofs - 1;
+		if (pos < max_height) {
+			pos = max_height - 1; /* avoid negative y if tape is tiny */
+		}
 		if (debug) {
 			printf("debug: line %i pos=%i ofs=%i\n", i+1, pos, ofs);
 		}
